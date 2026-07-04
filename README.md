@@ -1,2 +1,4 @@
 # Maid Harvest Grape
-本模组添加了一个女仆工作使得女仆能够采收葡萄。
+This is a Touhou little maid addon which adds a maid task makes maids can harvest grapes in Kaleidoscope: Tavern.
+
+![Task](docs/images/task.png)
