@@ -55,8 +55,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           path: |
-            fabric/build/libs
-            neoforge/build/libs
+            build/libs
 
       - name: Get version from current commit
         id: current-version
