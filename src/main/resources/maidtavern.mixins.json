@@ -2,7 +2,10 @@
   "required": true,
   "package": "com.winexp.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "BarrelBlockEntityAccessor",
+    "ItemUtilsMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

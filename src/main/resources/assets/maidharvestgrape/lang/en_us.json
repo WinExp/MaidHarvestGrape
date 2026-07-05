@@ -1,5 +1,0 @@
-{
-  "task.maidharvestgrape.grape": "Harvest grape",
-  "task.maidharvestgrape.grape.desc": "Maid will harvest grape around",
-  "task.maidharvestgrape.grape.condition.has_shears": "Mainhand holds a shear (the grape will drop additionally)"
-}

@@ -1,4 +1,4 @@
-package com.winexp.task;
+package com.winexp.maid;
 
 import com.github.tartaricacid.touhoulittlemaid.api.task.IFarmTask;
 import com.github.tartaricacid.touhoulittlemaid.entity.ai.brain.task.MaidFarmPlantTask;
@@ -8,7 +8,8 @@ import com.github.ysbbbbbb.kaleidoscopetavern.init.ModItems;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import com.mojang.datafixers.util.Pair;
-import com.winexp.MaidHarvestGrapeMod;
+import com.winexp.MaidTavernMod;
+import com.winexp.maid.grape.MaidGrapeMoveTask;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -30,7 +31,7 @@ import java.util.function.Predicate;
 public class TaskGrape implements IFarmTask {
     public static final int GRAPE_HEIGHT = 3;
     private static final UUID FAKE_PLAYER_UUID = UUID.randomUUID();
-    private static final ResourceLocation UID = MaidHarvestGrapeMod.asResource("grape");
+    private static final ResourceLocation UID = MaidTavernMod.asResource("grape");
     private static final ItemStack ICON = ModItems.GRAPE.toStack();
 
     @Override
@@ -95,9 +96,9 @@ public class TaskGrape implements IFarmTask {
 
     @Override
     public List<Pair<Integer, BehaviorControl<? super EntityMaid>>> createBrainTasks(EntityMaid maid) {
-        MaidGrapeMoveTask maidFarmMoveTask = new MaidGrapeMoveTask(this, 0.6f);
+        MaidGrapeMoveTask maidGrapeMoveTask = new MaidGrapeMoveTask(this, 0.6f);
         MaidFarmPlantTask maidFarmPlantTask = new MaidFarmPlantTask(this);
-        return Lists.newArrayList(Pair.of(5, maidFarmMoveTask), Pair.of(6, maidFarmPlantTask));
+        return Lists.newArrayList(Pair.of(5, maidGrapeMoveTask), Pair.of(6, maidFarmPlantTask));
     }
 
     @Override

@@ -1,0 +1,26 @@
+package com.winexp.entity;
+
+import com.winexp.MaidTavernMod;
+import com.winexp.maid.brew.BrewingList;
+import com.winexp.maid.brew.BrewingSession;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.Optional;
+
+public class MaidTavernEntities {
+    private static final DeferredRegister<MemoryModuleType<?>> REGISTER = DeferredRegister.create(BuiltInRegistries.MEMORY_MODULE_TYPE, MaidTavernMod.MOD_ID);
+
+    public static final DeferredHolder<MemoryModuleType<?>, MemoryModuleType<BrewingList>> BREWING_LIST = REGISTER
+            .register("brewing_list", () -> new MemoryModuleType<>(Optional.of(BrewingList.CODEC)));
+
+    public static final DeferredHolder<MemoryModuleType<?>, MemoryModuleType<BrewingSession>> BREWING_SESSION = REGISTER
+            .register("brewing_session", () -> new MemoryModuleType<>(Optional.of(BrewingSession.CODEC)));
+
+    public static void register(IEventBus modEventBus) {
+        REGISTER.register(modEventBus);
+    }
+}
