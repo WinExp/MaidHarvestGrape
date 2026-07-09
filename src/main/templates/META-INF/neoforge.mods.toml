@@ -46,7 +46,7 @@ authors="WinExp"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-A mod that allows maids to harvest grapes.
+A mod that adds some features for Touhou Little Maid.
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
