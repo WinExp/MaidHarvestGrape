@@ -29,8 +29,8 @@ import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.item.Item;
@@ -38,14 +38,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
-import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.wrapper.InvWrapper;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -99,7 +99,7 @@ public class TaskBrew implements IBrewTask {
     }
 
     @Override
-    public @Nullable IBarrel getBarrel(ServerLevel level, BlockPos pos) {
+    public @Nullable IBarrel getBarrel(Level level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
         return BarrelBlock.getBarrelEntity(level, pos, state);
     }
@@ -123,58 +123,114 @@ public class TaskBrew implements IBrewTask {
     public boolean hasRequiredMaterials(EntityMaid maid, ResourceLocation recipeId) {
         BrewingSession session = maid.getBrain().getMemory(MaidTavernEntities.BREWING_SESSION.get()).orElse(null);
         BarrelRecipe recipe = (BarrelRecipe) maid.level().getRecipeManager().byKey(recipeId).map(RecipeHolder::value).orElse(null);
+        IItemHandler maidInv = maid.getAvailableInv(true);
         if (recipe == null) return false;
-        if (!ItemHandlerUtil.matchesCount(maid.getAvailableInv(true), stack ->
-                stack.is(ModItems.EMPTY_BOTTLE), MinMaxBounds.Ints.atLeast(1))) return false;
         if (session == null || session.fluidPlaced().isFalse()) {
-            if (!ItemHandlerUtil.matchesCount(maid.getAvailableInv(true), stack ->
-                    recipe.fluid().getBucket() == stack.getItem(), MinMaxBounds.Ints.atLeast(4))) return false;
+            if (!ItemHandlerUtil.matchesCount(maidInv, stack ->
+                    stack.is(recipe.fluid().getBucket()), MinMaxBounds.Ints.atLeast(4))) return false;
         }
         if (session == null || session.ingredientsPlaced().isFalse()) {
+            ingredient:
             for (Ingredient ingredient : recipe.getIngredients()) {
                 if (ingredient.isEmpty()) continue;
-                if (!ItemHandlerUtil.matchesCount(maid.getAvailableInv(true), ingredient, MinMaxBounds.Ints.atLeast(16))) return false;
+                for (ItemStack ingredientStack : ingredient.getItems()) {
+                    if (ingredientStack.isEmpty()) continue;
+                    if (ItemHandlerUtil.matchesCount(maidInv, stack ->
+                            ItemStack.isSameItemSameComponents(stack, ingredientStack), MinMaxBounds.Ints.atLeast(16))) {
+                        continue ingredient;
+                    }
+                }
+                return false;
             }
         }
         return true;
     }
 
     @Override
-    public boolean hasRequiredMaterialsInStorage(EntityMaid maid, ResourceLocation recipeId, IItemHandler storage) {
-        BarrelRecipe recipe = (BarrelRecipe) maid.level().getRecipeManager().byKey(recipeId).map(RecipeHolder::value).orElse(null);
-        if (recipe == null) return false;
+    public boolean shouldTake(EntityMaid maid) {
+        BrewingList brewingList = maid.getBrain().getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
+        if (brewingList == null) return false;
+        ResourceLocation recipeId = brewingList.get();
+        return !ItemHandlerUtil.contains(maid.getAvailableInv(true), stack ->
+                stack.is(ModItems.EMPTY_BOTTLE)) || !hasRequiredMaterials(maid, recipeId);
+    }
+
+    @Override
+    public @Nullable List<Pair<ItemStack, Integer>> getNeedToTakeStacks(EntityMaid maid, IItemHandler storage) {
         IItemHandler maidInv = maid.getAvailableInv(true);
+        Brain<EntityMaid> brain = maid.getBrain();
+        BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
+        if (brewingList == null) return List.of();
+        BrewingSession session = brain.getMemory(MaidTavernEntities.BREWING_SESSION.get()).orElse(null);
+        ResourceLocation recipeId = brewingList.get();
+        BarrelRecipe recipe = (BarrelRecipe) maid.level().getRecipeManager().byKey(recipeId).map(RecipeHolder::value).orElse(null);
+        List<Pair<ItemStack, Integer>> baseResult = new ArrayList<>();
         Predicate<ItemStack> bottlePredicate = stack -> stack.is(ModItems.EMPTY_BOTTLE);
-        int bottleRequired = 1 - ItemHandlerUtil.countItems(maidInv, bottlePredicate);
+        int bottleRequired = 16 - ItemHandlerUtil.countItems(maidInv, bottlePredicate);
         if (bottleRequired > 0) {
-            if (!ItemHandlerUtil.matchesCount(storage, bottlePredicate, MinMaxBounds.Ints.atLeast(bottleRequired))) return false;
+            List<ItemStack> bottleStacks = ItemHandlerUtil.findStacks(storage, bottlePredicate);
+            for (ItemStack stack : bottleStacks) {
+                int count = Math.min(stack.getCount(), bottleRequired);
+                baseResult.add(new Pair<>(stack, count));
+                bottleRequired -= count;
+                if (bottleRequired <= 0) break;
+            }
         }
-        Predicate<ItemStack> fluidPredicate = stack -> recipe.fluid().getBucket() == stack.getItem();
-        int fluidRequired = 4 - ItemHandlerUtil.countItems(maidInv, fluidPredicate);
+        List<Pair<ItemStack, Integer>> result = new ArrayList<>(baseResult);
+        Predicate<ItemStack> fluidPredicate = stack -> stack.is(recipe.fluid().getBucket());
+        int fluidRequired = (session == null || session.fluidPlaced().isFalse())
+                ? (4 - ItemHandlerUtil.countItems(maidInv, fluidPredicate)) : 0;
         if (fluidRequired > 0) {
-            if (!ItemHandlerUtil.matchesCount(storage, fluidPredicate, MinMaxBounds.Ints.atLeast(fluidRequired))) return false;
+            List<ItemStack> fluidStacks = ItemHandlerUtil.findStacks(storage, fluidPredicate);
+            for (ItemStack stack : fluidStacks) {
+                int count = Math.min(stack.getCount(), fluidRequired);
+                result.add(new Pair<>(stack, count));
+                fluidRequired -= count;
+                if (fluidRequired <= 0) break;
+            }
+            if (fluidRequired > 0) return baseResult;
         }
+        ingredient:
         for (Ingredient ingredient : recipe.getIngredients()) {
             if (ingredient.isEmpty()) continue;
-            int ingredientRequired = 16 - ItemHandlerUtil.countItems(maidInv, ingredient);
-            if (ingredientRequired > 0) {
-                if (!ItemHandlerUtil.matchesCount(storage, ingredient, MinMaxBounds.Ints.atLeast(ingredientRequired))) return false;
+            List<Pair<ItemStack, Integer>> ingredientResults = new ArrayList<>();
+            for (ItemStack ingredientStack : ingredient.getItems()) {
+                if (ingredientStack.isEmpty()) continue;
+                Predicate<ItemStack> ingredientPredicate = stack ->
+                        ItemStack.isSameItemSameComponents(stack, ingredientStack);
+                int ingredientRequired = (session == null || session.ingredientsPlaced().isFalse())
+                        ? (16 - ItemHandlerUtil.countItems(maidInv, ingredientPredicate)) : 0;
+                if (ingredientRequired > 0) {
+                    ingredientResults.clear();
+                    List<ItemStack> ingredientStacksInStorage = ItemHandlerUtil.findStacks(storage, ingredientPredicate);
+                    for (ItemStack stack : ingredientStacksInStorage) {
+                        int count = Math.min(stack.getCount(), ingredientRequired);
+                        ingredientResults.add(new Pair<>(stack, count));
+                        ingredientRequired -= count;
+                        if (ingredientRequired <= 0) {
+                            result.addAll(ingredientResults);
+                            continue ingredient;
+                        }
+                    }
+                }
             }
+            return baseResult;
         }
-        return true;
+
+        return result;
     }
 
     @Override
-    public List<ItemStack> getToStoreStacks(EntityMaid maid) {
+    public List<ItemStack> getNeedToStoreStacks(EntityMaid maid) {
         Brain<EntityMaid> brain = maid.getBrain();
-        if (!brain.hasMemoryValue(MaidTavernEntities.BREWING_LIST.get())) return null;
-        BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).get();
+        BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
+        if (brewingList == null) return List.of();
         for (ResourceLocation recipeId : brewingList.getRecipes()) {
             BarrelRecipe recipe = (BarrelRecipe) maid.level().getRecipeManager().byKey(recipeId).map(RecipeHolder::value).orElse(null);
             if (recipe == null) continue;
             Item resultItem = recipe.getResultItem(maid.level().registryAccess()).getItem();
             List<ItemStack> foundStacks = ItemHandlerUtil.findStacks(maid.getAvailableInv(false), stack ->
-                    stack.is(resultItem) || stack.is(Items.BUCKET), Integer.MAX_VALUE);
+                    stack.is(resultItem) || stack.is(Items.BUCKET));
             if (!foundStacks.isEmpty()) {
                 return foundStacks;
             }
@@ -183,27 +239,12 @@ public class TaskBrew implements IBrewTask {
     }
 
     @Override
-    public boolean isStorageValid(EntityMaid maid, BlockPos pos) {
-        Brain<EntityMaid> brain = maid.getBrain();
-        BlockState state = maid.level().getBlockState(pos);
-        if (maid.level().getBlockEntity(pos) instanceof BaseContainerBlockEntity container) {
+    public boolean isStorageValid(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (level.getBlockEntity(pos) instanceof Container) {
             if (!state.is(Blocks.BARREL)
             && !state.is(Blocks.CHEST)) return false;
-            if (state.is(Blocks.CHEST) && ChestBlock.isChestBlockedAt(maid.level(), pos)) {
-                return false;
-            }
-            IItemHandler storage = new InvWrapper(container);
-            List<ItemStack> toStoreStacks = getToStoreStacks(maid);
-            BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).get();
-            boolean takeFlag = false;
-            for (ResourceLocation recipeId : brewingList.getRecipes()) {
-                if (hasRequiredMaterialsInStorage(maid, recipeId, storage)) {
-                    takeFlag = true;
-                    break;
-                }
-            }
-            boolean storeFlag = !toStoreStacks.isEmpty() && ItemHandlerUtil.canInsertAny(storage, toStoreStacks);
-            return takeFlag || storeFlag;
+            return !state.is(Blocks.CHEST) || !ChestBlock.isChestBlockedAt(level, pos);
         }
         return false;
     }
@@ -212,7 +253,8 @@ public class TaskBrew implements IBrewTask {
     public boolean isBottleValid(EntityMaid maid, BlockPos pos) {
         if (pos == null) return false;
         BlockState state = maid.level().getBlockState(pos);
-        BrewingList brewingList = maid.getBrain().getMemory(MaidTavernEntities.BREWING_LIST.get()).get();
+        BrewingList brewingList = maid.getBrain().getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
+        if (brewingList == null) return false;
         if (!state.is(ModBlocks.MOLOTOV)
                 && !(state.getBlock() instanceof DrinkBlock)) return false;
         if (!maid.level().getBlockState(pos.above()).is(ModBlocks.TAP)) return false;
@@ -246,7 +288,7 @@ public class TaskBrew implements IBrewTask {
         BlockState tapState = maid.level().getBlockState(pos.above());
         if (!tapState.is(ModBlocks.TAP)) return false;
         Direction tapFacing = tapState.getValue(TapBlock.FACING);
-        IBarrel barrel = getBarrel((ServerLevel) maid.level(), pos.relative(tapFacing.getOpposite()));
+        IBarrel barrel = getBarrel(maid.level(), pos.relative(tapFacing.getOpposite()));
         if (barrel == null || barrel.getRecipeId() == null
                 || barrel.getBrewLevel() != IBarrel.BREWING_FINISHED) return false;
         for (ResourceLocation recipeId : brewingList.getRecipes()) {

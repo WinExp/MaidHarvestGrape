@@ -2,15 +2,12 @@ package com.winexp.maid.brew.storage;
 
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.init.InitEntities;
-import com.github.ysbbbbbb.kaleidoscopetavern.crafting.recipe.BarrelRecipe;
-import com.github.ysbbbbbb.kaleidoscopetavern.init.ModItems;
 import com.google.common.collect.ImmutableMap;
+import com.mojang.datafixers.util.Pair;
 import com.winexp.entity.MaidTavernEntities;
-import com.winexp.maid.brew.BrewingList;
 import com.winexp.maid.brew.IBrewTask;
 import com.winexp.util.ItemHandlerUtil;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.ai.Brain;
@@ -20,21 +17,16 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
     private final IBrewTask task;
-    private List<ItemStack> toStoreStacksCached;
 
     public MaidBrewTakeAndStoreTask(IBrewTask task) {
         super(ImmutableMap.of(
@@ -44,22 +36,10 @@ public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
         this.task = task;
     }
 
-    private List<ItemStack> getToStoreStacks(EntityMaid maid) {
-        if (toStoreStacksCached == null) {
-            toStoreStacksCached = task.getToStoreStacks(maid);
-        }
-        return toStoreStacksCached;
-    }
-
     @Override
     protected boolean checkExtraStartConditions(ServerLevel level, EntityMaid maid) {
-        toStoreStacksCached = null;
         Brain<EntityMaid> brain = maid.getBrain();
-        if (brain.hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get())) return false;
         PositionTracker targetPos = brain.getMemory(InitEntities.TARGET_POS.get()).get();
-        BlockPos pos = targetPos.currentBlockPosition();
-        if (!task.isStorageValid(maid, pos)) return false;
-
         Vec3 targetV3d = targetPos.currentPosition();
         if (maid.distanceToSqr(targetV3d) > Math.pow(task.getCloseEnoughDist(), 2)) {
             Optional<WalkTarget> walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET);
@@ -68,7 +48,10 @@ public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
             }
             return false;
         }
-        return true;
+
+        if (brain.hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get())) return false;
+        BlockPos pos = targetPos.currentBlockPosition();
+        return task.isStorageValid(level, pos);
     }
 
     @Override
@@ -78,39 +61,16 @@ public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
         BaseContainerBlockEntity container = (BaseContainerBlockEntity) level.getBlockEntity(pos);
         IItemHandlerModifiable storage = new InvWrapper(container);
         IItemHandlerModifiable maidInv = maid.getAvailableInv(true);
-        BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).get();
-        for (ResourceLocation recipeId : brewingList.getRecipes()) {
-            BarrelRecipe recipe = (BarrelRecipe) level.getRecipeManager().byKey(recipeId).map(RecipeHolder::value).orElse(null);
-            if (recipe != null && task.hasRequiredMaterialsInStorage(maid, recipeId, storage)) {
-                Predicate<ItemStack> bottlePredicate = stack -> stack.is(ModItems.EMPTY_BOTTLE);
-                int bottleRequired = 1 - ItemHandlerUtil.countItems(maidInv, bottlePredicate);
-                if (bottleRequired > 0) {
-                    List<ItemStack> stacks = ItemHandlerUtil.findStacks(storage, bottlePredicate, bottleRequired);
-                    for (ItemStack stack : stacks) {
-                        ItemHandlerUtil.replaceStack(storage, stack, ItemHandlerHelper.insertItemStacked(maidInv, stack, false));
-                    }
-                }
-                Predicate<ItemStack> fluidPredicate = stack -> recipe.fluid().getBucket() == stack.getItem();
-                int fluidRequired = 4 - ItemHandlerUtil.countItems(maidInv, fluidPredicate);
-                if (fluidRequired > 0) {
-                    List<ItemStack> stacks = ItemHandlerUtil.findStacks(storage, fluidPredicate, fluidRequired);
-                    for (ItemStack stack : stacks) {
-                        ItemHandlerUtil.replaceStack(storage, stack, ItemHandlerHelper.insertItemStacked(maidInv, stack, false));
-                    }
-                }
-                for (Ingredient ingredient : recipe.getIngredients()) {
-                    if (ingredient.isEmpty()) continue;
-                    int ingredientRequired = 16 - ItemHandlerUtil.countItems(maidInv, ingredient);
-                    if (ingredientRequired > 0) {
-                        List<ItemStack> stacks = ItemHandlerUtil.findStacks(storage, ingredient, ingredientRequired);
-                        for (ItemStack stack : stacks) {
-                            ItemHandlerUtil.replaceStack(storage, stack, ItemHandlerHelper.insertItemStacked(maidInv, stack, false));
-                        }
-                    }
-                }
-            }
+        for (Pair<ItemStack, Integer> pair : task.getNeedToTakeStacks(maid, storage)) {
+            ItemStack stack = pair.getFirst();
+            int count = pair.getSecond();
+            if (!ItemHandlerUtil.canInsert(maidInv, stack.copyWithCount(count))) continue;
+            ItemHandlerHelper.insertItemStacked(maidInv, stack.copyWithCount(count), false);
+            stack.shrink(count);
         }
-        for (ItemStack stack : getToStoreStacks(maid)) {
+
+        for (ItemStack stack : task.getNeedToStoreStacks(maid)) {
+            if (!ItemHandlerUtil.canInsert(storage, stack)) continue;
             ItemHandlerUtil.replaceStack(maidInv, stack,
                     ItemHandlerHelper.insertItemStacked(storage, stack, false));
         }

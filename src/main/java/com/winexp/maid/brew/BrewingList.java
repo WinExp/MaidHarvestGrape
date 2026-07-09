@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class BrewingList {
@@ -25,6 +26,11 @@ public class BrewingList {
 
     public boolean isEmpty() {
         return recipeIds.isEmpty();
+    }
+
+    public void shuffle() {
+        if (isEmpty()) return;
+        Collections.shuffle(recipeIds);
     }
 
     public @Nullable ResourceLocation pop() {

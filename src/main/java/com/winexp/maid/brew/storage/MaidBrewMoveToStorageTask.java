@@ -4,51 +4,32 @@ import com.github.tartaricacid.touhoulittlemaid.entity.ai.brain.task.MaidMoveToB
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.init.InitEntities;
 import com.winexp.entity.MaidTavernEntities;
-import com.winexp.maid.brew.BrewingList;
 import com.winexp.maid.brew.IBrewTask;
+import com.winexp.util.ItemHandlerUtil;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.ai.Brain;
-import net.minecraft.world.item.ItemStack;
-
-import java.util.List;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
 public class MaidBrewMoveToStorageTask extends MaidMoveToBlockTask {
     private final IBrewTask task;
-    private List<ItemStack> toStoreStacksCached;
 
     public MaidBrewMoveToStorageTask(IBrewTask task, float movementSpeed, int verticalSearchRange) {
         super(movementSpeed, verticalSearchRange);
         this.task = task;
-    }
-
-    private List<ItemStack> getToStoreStacks(EntityMaid maid) {
-        if (toStoreStacksCached == null) {
-            toStoreStacksCached = task.getToStoreStacks(maid);
-        }
-        return toStoreStacksCached;
+        setMaxCheckRate(40);
     }
 
     @Override
     protected boolean checkExtraStartConditions(ServerLevel level, EntityMaid maid) {
-        toStoreStacksCached = null;
         Brain<EntityMaid> brain = maid.getBrain();
-        BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
-        boolean takeFlag = false;
-        if (brewingList != null) {
-            for (ResourceLocation recipeId : brewingList.getRecipes()) {
-                if (!takeFlag && !task.hasRequiredMaterials(maid, recipeId)) {
-                    takeFlag = true;
-                }
-            }
-        } else return false;
-
         if (!super.checkExtraStartConditions(level, maid)
                 || brain.hasMemoryValue(InitEntities.TARGET_POS.get())
                 || brain.hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get())
                 || !brain.hasMemoryValue(MaidTavernEntities.BREWING_LIST.get())) return false;
-        return takeFlag || !getToStoreStacks(maid).isEmpty();
+        return task.shouldTake(maid) || !task.getNeedToStoreStacks(maid).isEmpty();
     }
 
     @Override
@@ -58,6 +39,10 @@ public class MaidBrewMoveToStorageTask extends MaidMoveToBlockTask {
 
     @Override
     protected boolean shouldMoveTo(ServerLevel level, EntityMaid maid, BlockPos pos) {
-        return task.isStorageValid(maid, pos);
+        if (!(level.getBlockEntity(pos) instanceof Container container)) return false;
+        if (!task.isStorageValid(level, pos)) return false;
+        IItemHandler containerInv = new InvWrapper(container);
+        if (!task.getNeedToTakeStacks(maid, containerInv).isEmpty()) return true;
+        return ItemHandlerUtil.canInsertAny(containerInv, task.getNeedToStoreStacks(maid));
     }
 }

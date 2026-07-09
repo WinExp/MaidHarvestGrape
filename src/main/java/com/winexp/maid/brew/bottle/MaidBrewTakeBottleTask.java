@@ -37,9 +37,6 @@ public class MaidBrewTakeBottleTask extends Behavior<EntityMaid> {
     protected boolean checkExtraStartConditions(ServerLevel level, EntityMaid maid) {
         Brain<EntityMaid> brain = maid.getBrain();
         PositionTracker targetPos = brain.getMemory(InitEntities.TARGET_POS.get()).get();
-        if (brain.hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get())) return false;
-        if (!task.isBottleValid(maid, targetPos.currentBlockPosition())) return false;
-
         Vec3 targetV3d = targetPos.currentPosition();
         if (maid.distanceToSqr(targetV3d) > Math.pow(task.getCloseEnoughDist(), 2)) {
             Optional<WalkTarget> walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET);
@@ -48,7 +45,9 @@ public class MaidBrewTakeBottleTask extends Behavior<EntityMaid> {
             }
             return false;
         }
-        return true;
+
+        if (brain.hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get())) return false;
+        return task.isBottleValid(maid, targetPos.currentBlockPosition());
     }
 
     @Override

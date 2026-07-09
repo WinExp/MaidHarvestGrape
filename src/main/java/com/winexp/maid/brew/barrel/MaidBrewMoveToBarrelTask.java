@@ -6,9 +6,9 @@ import com.github.tartaricacid.touhoulittlemaid.init.InitEntities;
 import com.github.ysbbbbbb.kaleidoscopetavern.api.blockentity.IBarrel;
 import com.github.ysbbbbbb.kaleidoscopetavern.block.brew.BarrelBlock;
 import com.winexp.entity.MaidTavernEntities;
-import com.winexp.maid.brew.IBrewTask;
 import com.winexp.maid.brew.BrewingList;
 import com.winexp.maid.brew.BrewingSession;
+import com.winexp.maid.brew.IBrewTask;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -37,12 +37,9 @@ public class MaidBrewMoveToBarrelTask extends MaidMoveToBlockTask {
         if (brain.hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get())) return true;
         BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
         if (brewingList != null) {
-            for (ResourceLocation recipeId : brewingList.getRecipes()) {
-                if (task.hasRequiredMaterials(maid, recipeId)) {
-                    brewingList.select(recipeId);
-                    return true;
-                }
-            }
+            brewingList.shuffle();
+            ResourceLocation recipeId = brewingList.get();
+            return task.hasRequiredMaterials(maid, recipeId);
         }
         return false;
     }

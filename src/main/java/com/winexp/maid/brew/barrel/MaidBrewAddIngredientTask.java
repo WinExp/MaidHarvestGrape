@@ -6,8 +6,8 @@ import com.github.ysbbbbbb.kaleidoscopetavern.api.blockentity.IBarrel;
 import com.github.ysbbbbbb.kaleidoscopetavern.crafting.recipe.BarrelRecipe;
 import com.google.common.collect.ImmutableMap;
 import com.winexp.entity.MaidTavernEntities;
-import com.winexp.maid.brew.IBrewTask;
 import com.winexp.maid.brew.BrewingSession;
+import com.winexp.maid.brew.IBrewTask;
 import com.winexp.util.ItemHandlerUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -21,6 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,15 +43,6 @@ public class MaidBrewAddIngredientTask extends Behavior<EntityMaid> {
     protected boolean checkExtraStartConditions(ServerLevel level, EntityMaid maid) {
         Brain<EntityMaid> brain = maid.getBrain();
         PositionTracker targetPos = brain.getMemory(InitEntities.TARGET_POS.get()).get();
-        BlockPos pos = targetPos.currentBlockPosition();
-        IBarrel barrel = task.getBarrel(level, pos);
-        BrewingSession session = brain.getMemory(MaidTavernEntities.BREWING_SESSION.get()).get();
-        if (!task.isBarrelAvailable(maid, barrel) || !task.hasRequiredMaterials(maid, session.recipeId())) {
-            brain.eraseMemory(InitEntities.TARGET_POS.get());
-            clearSession(maid);
-            return false;
-        }
-
         Vec3 targetV3d = targetPos.currentPosition();
         if (maid.distanceToSqr(targetV3d) > Math.pow(task.getCloseEnoughDist(), 2)) {
             Optional<WalkTarget> walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET);
@@ -58,6 +50,15 @@ public class MaidBrewAddIngredientTask extends Behavior<EntityMaid> {
                 brain.eraseMemory(InitEntities.TARGET_POS.get());
                 clearSession(maid);
             }
+            return false;
+        }
+
+        BlockPos pos = targetPos.currentBlockPosition();
+        IBarrel barrel = task.getBarrel(level, pos);
+        BrewingSession session = brain.getMemory(MaidTavernEntities.BREWING_SESSION.get()).get();
+        if (!task.isBarrelAvailable(maid, barrel) || !task.hasRequiredMaterials(maid, session.recipeId())) {
+            brain.eraseMemory(InitEntities.TARGET_POS.get());
+            clearSession(maid);
             return false;
         }
         return true;
@@ -90,30 +91,43 @@ public class MaidBrewAddIngredientTask extends Behavior<EntityMaid> {
         }
         if (!barrel.isOpen()) {
             barrel.openLid(maid);
+            cooldown = stepCooldown;
         } else if (!session.fluidPlaced().booleanValue()) {
             for (int i = 0; i < 4; i++) {
                 barrel.addFluid(maid, ItemHandlerUtil.findStack(maid.getAvailableInv(true), stack ->
                         stack.getItem() == recipe.fluid().getBucket()));
             }
             session.fluidPlaced().setTrue();
+            cooldown = stepCooldown;
         } else if (!session.ingredientsPlaced().booleanValue()) {
+            ingredient:
             for (Ingredient ingredient : recipe.ingredients()) {
                 if (ingredient.isEmpty()) continue;
-                List<ItemStack> stacks = ItemHandlerUtil.findStacks(maid.getAvailableInv(true), ingredient, 16);
-                int count = 0;
-                for (ItemStack stack : stacks) {
-                    int beforeCount = stack.getCount();
-                    barrel.addIngredient(maid, stack);
-                    count += beforeCount - stack.getCount();
-                    if (count >= 16) break;
+                for (ItemStack ingredientStack : ingredient.getItems()) {
+                    if (ingredientStack.isEmpty()) continue;
+                    List<ItemStack> stacks = ItemHandlerUtil.findStacks(maid.getAvailableInv(true), stack ->
+                            ItemStack.isSameItemSameComponents(stack, ingredientStack));
+                    int count = 0;
+                    List<ItemStack> addStacks = new ArrayList<>();
+                    for (ItemStack stack : stacks) {
+                        addStacks.add(stack);
+                        count += stack.getCount();
+                        if (count >= 16) {
+                            for (ItemStack addStack : addStacks) {
+                                barrel.addIngredient(maid, addStack);
+                            }
+                            continue ingredient;
+                        }
+                    }
                 }
+
             }
             session.ingredientsPlaced().setTrue();
+            cooldown = stepCooldown;
         } else {
             barrel.closeLid(maid);
             clearSession(maid);
         }
-        cooldown = stepCooldown;
     }
 
     private void clearSession(EntityMaid maid) {

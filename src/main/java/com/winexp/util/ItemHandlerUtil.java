@@ -20,7 +20,7 @@ public class ItemHandlerUtil {
     }
 
     public static boolean canInsert(IItemHandler itemHandler, ItemStack stack) {
-        return ItemHandlerHelper.insertItemStacked(itemHandler, stack.copyWithCount(1), true).isEmpty();
+        return ItemHandlerHelper.insertItemStacked(itemHandler, stack.copy(), true).isEmpty();
     }
 
     public static boolean canInsertAny(IItemHandler itemHandler, List<ItemStack> stacks) {
@@ -58,17 +58,13 @@ public class ItemHandlerUtil {
         return null;
     }
 
-    public static List<ItemStack> findStacks(IItemHandler itemHandler, Predicate<ItemStack> predicate, int count) {
-        if (count <= 0) return List.of();
+    public static List<ItemStack> findStacks(IItemHandler itemHandler, Predicate<ItemStack> predicate) {
         List<ItemStack> stacks = new ArrayList<>();
-        int count1 = 0;
         for (int i = 0; i < itemHandler.getSlots(); i++) {
             ItemStack stack = itemHandler.getStackInSlot(i);
             if (predicate.test(stack)) {
-                count1 += stack.getCount();
                 stacks.add(stack);
             }
-            if (count1 >= count) return stacks;
         }
         return stacks;
     }
