@@ -6,8 +6,8 @@ import com.github.ysbbbbbb.kaleidoscopetavern.crafting.recipe.BarrelRecipe;
 import com.github.ysbbbbbb.kaleidoscopetavern.init.ModItems;
 import com.google.common.collect.ImmutableMap;
 import com.winexp.entity.MaidTavernEntities;
-import com.winexp.maid.brew.IBrewTask;
 import com.winexp.maid.brew.BrewingList;
+import com.winexp.maid.brew.IBrewTask;
 import com.winexp.util.ItemHandlerUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -27,7 +27,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +34,7 @@ import java.util.function.Predicate;
 
 public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
     private final IBrewTask task;
-    private @Nullable ItemStack toStoreStackCached;
+    private List<ItemStack> toStoreStacksCached;
 
     public MaidBrewTakeAndStoreTask(IBrewTask task) {
         super(ImmutableMap.of(
@@ -45,16 +44,16 @@ public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
         this.task = task;
     }
 
-    private @Nullable ItemStack getToStoreStack(EntityMaid maid) {
-        if (toStoreStackCached == null) {
-            toStoreStackCached = task.getToStoreStack(maid);
+    private List<ItemStack> getToStoreStacks(EntityMaid maid) {
+        if (toStoreStacksCached == null) {
+            toStoreStacksCached = task.getToStoreStacks(maid);
         }
-        return toStoreStackCached;
+        return toStoreStacksCached;
     }
 
     @Override
     protected boolean checkExtraStartConditions(ServerLevel level, EntityMaid maid) {
-        toStoreStackCached = null;
+        toStoreStacksCached = null;
         Brain<EntityMaid> brain = maid.getBrain();
         if (brain.hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get())) return false;
         PositionTracker targetPos = brain.getMemory(InitEntities.TARGET_POS.get()).get();
@@ -111,12 +110,9 @@ public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
                 }
             }
         }
-        while (true) {
-            ItemStack toStoreStack = getToStoreStack(maid);
-            if (toStoreStack == null) break;
-            ItemHandlerUtil.replaceStack(maidInv, toStoreStack,
-                    ItemHandlerHelper.insertItemStacked(storage, toStoreStack, false));
-            toStoreStackCached = null;
+        for (ItemStack stack : getToStoreStacks(maid)) {
+            ItemHandlerUtil.replaceStack(maidInv, stack,
+                    ItemHandlerHelper.insertItemStacked(storage, stack, false));
         }
         brain.eraseMemory(InitEntities.TARGET_POS.get());
         maid.playSound(SoundEvents.ITEM_FRAME_REMOVE_ITEM, 1.0f, 1.0f);

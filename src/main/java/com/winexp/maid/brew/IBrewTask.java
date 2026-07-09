@@ -11,6 +11,8 @@ import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface IBrewTask extends IMaidTask {
     double getCloseEnoughDist();
 
@@ -19,11 +21,11 @@ public interface IBrewTask extends IMaidTask {
     @Contract("_, null -> false")
     boolean isBarrelAvailable(EntityMaid maid, @Nullable IBarrel barrel);
 
-    boolean hasRequiredMaterials(EntityMaid maid, ResourceLocation recipeId, @Nullable BrewingSession session);
+    boolean hasRequiredMaterials(EntityMaid maid, ResourceLocation recipeId);
 
     boolean hasRequiredMaterialsInStorage(EntityMaid maid, ResourceLocation recipeId, IItemHandler itemHandler);
 
-    @Nullable ItemStack getToStoreStack(EntityMaid maid);
+    List<ItemStack> getToStoreStacks(EntityMaid maid);
 
     boolean isStorageValid(EntityMaid maid, BlockPos pos);
 

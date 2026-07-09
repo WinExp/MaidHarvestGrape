@@ -4,40 +4,41 @@ import com.github.tartaricacid.touhoulittlemaid.entity.ai.brain.task.MaidMoveToB
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.init.InitEntities;
 import com.winexp.entity.MaidTavernEntities;
-import com.winexp.maid.brew.IBrewTask;
 import com.winexp.maid.brew.BrewingList;
+import com.winexp.maid.brew.IBrewTask;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class MaidBrewMoveToStorageTask extends MaidMoveToBlockTask {
     private final IBrewTask task;
-    private @Nullable ItemStack toStoreStackCached;
+    private List<ItemStack> toStoreStacksCached;
 
     public MaidBrewMoveToStorageTask(IBrewTask task, float movementSpeed, int verticalSearchRange) {
         super(movementSpeed, verticalSearchRange);
         this.task = task;
     }
 
-    private @Nullable ItemStack getToStoreStack(EntityMaid maid) {
-        if (toStoreStackCached == null) {
-            toStoreStackCached = task.getToStoreStack(maid);
+    private List<ItemStack> getToStoreStacks(EntityMaid maid) {
+        if (toStoreStacksCached == null) {
+            toStoreStacksCached = task.getToStoreStacks(maid);
         }
-        return toStoreStackCached;
+        return toStoreStacksCached;
     }
 
     @Override
     protected boolean checkExtraStartConditions(ServerLevel level, EntityMaid maid) {
-        toStoreStackCached = null;
+        toStoreStacksCached = null;
         Brain<EntityMaid> brain = maid.getBrain();
         BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
         boolean takeFlag = false;
         if (brewingList != null) {
             for (ResourceLocation recipeId : brewingList.getRecipes()) {
-                if (!takeFlag && !task.hasRequiredMaterials(maid, recipeId, null)) {
+                if (!takeFlag && !task.hasRequiredMaterials(maid, recipeId)) {
                     takeFlag = true;
                 }
             }
@@ -47,7 +48,7 @@ public class MaidBrewMoveToStorageTask extends MaidMoveToBlockTask {
                 || brain.hasMemoryValue(InitEntities.TARGET_POS.get())
                 || brain.hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get())
                 || !brain.hasMemoryValue(MaidTavernEntities.BREWING_LIST.get())) return false;
-        return takeFlag || getToStoreStack(maid) != null;
+        return takeFlag || !getToStoreStacks(maid).isEmpty();
     }
 
     @Override

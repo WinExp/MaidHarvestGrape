@@ -23,6 +23,13 @@ public class ItemHandlerUtil {
         return ItemHandlerHelper.insertItemStacked(itemHandler, stack.copyWithCount(1), true).isEmpty();
     }
 
+    public static boolean canInsertAny(IItemHandler itemHandler, List<ItemStack> stacks) {
+        for (ItemStack stack : stacks) {
+            if (canInsert(itemHandler, stack)) return true;
+        }
+        return false;
+    }
+
     public static boolean contains(IItemHandler itemHandler, Predicate<ItemStack> predicate) {
         return matchesCount(itemHandler, predicate, MinMaxBounds.Ints.atLeast(1));
     }

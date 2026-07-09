@@ -120,7 +120,8 @@ public class TaskBrew implements IBrewTask {
     }
 
     @Override
-    public boolean hasRequiredMaterials(EntityMaid maid, ResourceLocation recipeId, @Nullable BrewingSession session) {
+    public boolean hasRequiredMaterials(EntityMaid maid, ResourceLocation recipeId) {
+        BrewingSession session = maid.getBrain().getMemory(MaidTavernEntities.BREWING_SESSION.get()).orElse(null);
         BarrelRecipe recipe = (BarrelRecipe) maid.level().getRecipeManager().byKey(recipeId).map(RecipeHolder::value).orElse(null);
         if (recipe == null) return false;
         if (!ItemHandlerUtil.matchesCount(maid.getAvailableInv(true), stack ->
@@ -164,7 +165,7 @@ public class TaskBrew implements IBrewTask {
     }
 
     @Override
-    public @Nullable ItemStack getToStoreStack(EntityMaid maid) {
+    public List<ItemStack> getToStoreStacks(EntityMaid maid) {
         Brain<EntityMaid> brain = maid.getBrain();
         if (!brain.hasMemoryValue(MaidTavernEntities.BREWING_LIST.get())) return null;
         BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).get();
@@ -172,15 +173,13 @@ public class TaskBrew implements IBrewTask {
             BarrelRecipe recipe = (BarrelRecipe) maid.level().getRecipeManager().byKey(recipeId).map(RecipeHolder::value).orElse(null);
             if (recipe == null) continue;
             Item resultItem = recipe.getResultItem(maid.level().registryAccess()).getItem();
-            ItemStack foundStack = ItemHandlerUtil.findStack(maid.getAvailableInv(true), stack -> resultItem == stack.getItem());
-            ItemStack bucketStack = ItemHandlerUtil.findStack(maid.getAvailableInv(true), stack -> stack.is(Items.BUCKET));
-            if (foundStack != null) {
-                return foundStack;
-            } else if (bucketStack != null) {
-                return bucketStack;
+            List<ItemStack> foundStacks = ItemHandlerUtil.findStacks(maid.getAvailableInv(false), stack ->
+                    stack.is(resultItem) || stack.is(Items.BUCKET), Integer.MAX_VALUE);
+            if (!foundStacks.isEmpty()) {
+                return foundStacks;
             }
         }
-        return null;
+        return List.of();
     }
 
     @Override
@@ -194,7 +193,7 @@ public class TaskBrew implements IBrewTask {
                 return false;
             }
             IItemHandler storage = new InvWrapper(container);
-            ItemStack toStoreStack = getToStoreStack(maid);
+            List<ItemStack> toStoreStacks = getToStoreStacks(maid);
             BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).get();
             boolean takeFlag = false;
             for (ResourceLocation recipeId : brewingList.getRecipes()) {
@@ -203,7 +202,7 @@ public class TaskBrew implements IBrewTask {
                     break;
                 }
             }
-            boolean storeFlag = toStoreStack != null && ItemHandlerUtil.canInsert(storage, toStoreStack);
+            boolean storeFlag = !toStoreStacks.isEmpty() && ItemHandlerUtil.canInsertAny(storage, toStoreStacks);
             return takeFlag || storeFlag;
         }
         return false;
