@@ -3,8 +3,8 @@
   "package": "com.winexp.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "BarrelBlockEntityAccessor",
-    "ItemUtilsMixin"
+    "com.winexp.maidtavern.mixin.BarrelBlockEntityAccessor",
+    "com.winexp.maidtavern.mixin.ItemUtilsMixin"
   ],
   "injectors": {
     "defaultRequire": 1
