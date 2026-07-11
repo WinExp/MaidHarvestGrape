@@ -12,15 +12,15 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.Optional;
 
 public class MaidTavernEntities {
-    private static final DeferredRegister<MemoryModuleType<?>> REGISTER = DeferredRegister.create(BuiltInRegistries.MEMORY_MODULE_TYPE, MaidTavern.MOD_ID);
+    private static final DeferredRegister<MemoryModuleType<?>> MEMORY_MODULE_TYPES = DeferredRegister.create(BuiltInRegistries.MEMORY_MODULE_TYPE, MaidTavern.MOD_ID);
 
-    public static final DeferredHolder<MemoryModuleType<?>, MemoryModuleType<BrewingList>> BREWING_LIST = REGISTER
+    public static final DeferredHolder<MemoryModuleType<?>, MemoryModuleType<BrewingList>> BREWING_LIST = MEMORY_MODULE_TYPES
             .register("brewing_list", () -> new MemoryModuleType<>(Optional.of(BrewingList.CODEC)));
 
-    public static final DeferredHolder<MemoryModuleType<?>, MemoryModuleType<BrewingSession>> BREWING_SESSION = REGISTER
+    public static final DeferredHolder<MemoryModuleType<?>, MemoryModuleType<BrewingSession>> BREWING_SESSION = MEMORY_MODULE_TYPES
             .register("brewing_session", () -> new MemoryModuleType<>(Optional.of(BrewingSession.CODEC)));
 
     public static void register(IEventBus modEventBus) {
-        REGISTER.register(modEventBus);
+        MEMORY_MODULE_TYPES.register(modEventBus);
     }
 }

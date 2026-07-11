@@ -1,6 +1,7 @@
 package com.winexp.maidtavern.item;
 
-import com.winexp.maidtavern.menu.MaidTavernMenuTypes;
+import com.winexp.maidtavern.maid.brew.BrewingList;
+import com.winexp.maidtavern.menu.BrewingListMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -21,7 +22,12 @@ public class BrewingListItem extends Item implements MenuProvider {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
         ItemStack stack = player.getItemInHand(usedHand);
-        player.openMenu(this);
+        player.openMenu(this, buf -> {
+            buf.writeEnum(usedHand);
+            BrewingList brewingList = stack.get(MaidTavernItems.BREWING_LIST_DATA);
+            if (brewingList == null) brewingList = new BrewingList();
+            buf.writeJsonWithCodec(BrewingList.CODEC, brewingList);
+        });
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
 
@@ -32,6 +38,8 @@ public class BrewingListItem extends Item implements MenuProvider {
 
     @Override
     public @Nullable AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
-        return MaidTavernMenuTypes.BREWING_LIST.get().create(containerId, inventory);
+        InteractionHand hand = player.getUsedItemHand();
+        ItemStack stack = player.getItemInHand(hand);
+        return new BrewingListMenu(containerId, inventory, hand, stack.getOrDefault(MaidTavernItems.BREWING_LIST_DATA.get(), new BrewingList()));
     }
 }

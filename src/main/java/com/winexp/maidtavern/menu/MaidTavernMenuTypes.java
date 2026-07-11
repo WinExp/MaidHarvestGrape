@@ -9,12 +9,12 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class MaidTavernMenuTypes {
-    private static final DeferredRegister<MenuType<?>> REGISTER = DeferredRegister.create(BuiltInRegistries.MENU, MaidTavern.MOD_ID);
+    private static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(BuiltInRegistries.MENU, MaidTavern.MOD_ID);
 
-    public static final DeferredHolder<MenuType<?>, MenuType<BrewingListMenu>> BREWING_LIST = REGISTER.register("brewing_list", () ->
+    public static final DeferredHolder<MenuType<?>, MenuType<BrewingListMenu>> BREWING_LIST = MENU_TYPES.register("brewing_list", () ->
             IMenuTypeExtension.create(BrewingListMenu::new));
 
     public static void register(IEventBus modEventBus) {
-        REGISTER.register(modEventBus);
+        MENU_TYPES.register(modEventBus);
     }
 }

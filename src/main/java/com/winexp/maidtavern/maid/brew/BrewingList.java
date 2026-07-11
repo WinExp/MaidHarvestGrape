@@ -1,8 +1,10 @@
 package com.winexp.maidtavern.maid.brew;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,11 +14,14 @@ import java.util.List;
 
 public class BrewingList {
     public static final Codec<BrewingList> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
-            ResourceLocation.CODEC.listOf().fieldOf("recipes").validate(list -> {
-                if (!list.isEmpty()) return DataResult.success(list);
-                else return DataResult.error(() -> "recipes cannot be empty");
-            }).forGetter(BrewingList::getRecipes)
+            ResourceLocation.CODEC.listOf().fieldOf("recipes").forGetter(BrewingList::getRecipes)
     ).apply(instance, BrewingList::new));
+    public static final StreamCodec<ByteBuf, BrewingList> STREAM_CODEC = StreamCodec.composite(
+            ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()),
+            BrewingList::getRecipes,
+            BrewingList::new
+    );
+
     private final List<ResourceLocation> recipeIds;
 
     public BrewingList() {
@@ -71,5 +76,18 @@ public class BrewingList {
 
     public List<ResourceLocation> getRecipes() {
         return new ArrayList<>(recipeIds);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof BrewingList list) {
+            return recipeIds.equals(list.recipeIds);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return recipeIds.hashCode();
     }
 }

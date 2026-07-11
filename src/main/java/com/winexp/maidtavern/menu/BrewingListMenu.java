@@ -1,27 +1,29 @@
 package com.winexp.maidtavern.menu;
 
 import com.winexp.maidtavern.maid.brew.BrewingList;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeManager;
 
 public class BrewingListMenu extends AbstractContainerMenu {
-    public final RecipeManager recipeManager;
-    public final RegistryAccess registryAccess;
+    public final Player player;
+    public final InteractionHand hand;
     public final BrewingList brewingList;
 
     public BrewingListMenu(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf buf) {
-        this(containerId, playerInventory, new BrewingList());
+        this(containerId, playerInventory,
+                buf.readEnum(InteractionHand.class),
+                buf.readJsonWithCodec(BrewingList.CODEC)
+        );
     }
 
-    public BrewingListMenu(int containerId, Inventory playerInventory, BrewingList brewingList) {
+    public BrewingListMenu(int containerId, Inventory playerInventory, InteractionHand hand, BrewingList brewingList) {
         super(MaidTavernMenuTypes.BREWING_LIST.get(), containerId);
-        registryAccess = playerInventory.player.registryAccess();
-        recipeManager = playerInventory.player.level().getRecipeManager();
+        player = playerInventory.player;
+        this.hand = hand;
         this.brewingList = brewingList;
     }
 

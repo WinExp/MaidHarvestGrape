@@ -31,8 +31,8 @@ public class BrewingListGhostSlotHandler implements IGhostIngredientHandler<Brew
                     public void accept(I ingredient) {
                         if (ingredient instanceof ItemStack stack) {
                             BrewingListMenu menu = gui.getMenu();
-                            for (RecipeHolder<BarrelRecipe> recipeHolder : menu.recipeManager.getAllRecipesFor(ModRecipes.BARREL_RECIPE)) {
-                                if (ItemStack.isSameItem(stack, recipeHolder.value().getResultItem(menu.registryAccess))
+                            for (RecipeHolder<BarrelRecipe> recipeHolder : menu.player.level().getRecipeManager().getAllRecipesFor(ModRecipes.BARREL_RECIPE)) {
+                                if (ItemStack.isSameItem(stack, recipeHolder.value().getResultItem(menu.player.registryAccess()))
                                         && menu.brewingList.add(recipeHolder.id())) {
                                     break;
                                 }

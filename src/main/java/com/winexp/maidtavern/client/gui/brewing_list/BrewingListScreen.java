@@ -3,11 +3,14 @@ package com.winexp.maidtavern.client.gui.brewing_list;
 import com.github.ysbbbbbb.kaleidoscopetavern.crafting.recipe.BarrelRecipe;
 import com.winexp.maidtavern.MaidTavern;
 import com.winexp.maidtavern.menu.BrewingListMenu;
+import com.winexp.maidtavern.network.ServerBoundUpdateBrewingListPayload;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -21,6 +24,12 @@ public class BrewingListScreen extends AbstractContainerScreen<BrewingListMenu> 
 
     public BrewingListScreen(BrewingListMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        updateRenderItems();
     }
 
     @Override
@@ -62,11 +71,19 @@ public class BrewingListScreen extends AbstractContainerScreen<BrewingListMenu> 
         guiGraphics.blit(LIST_LOCATION, (width - 192) / 2, (height - 192) / 2, 0, 0, 192, 192);
     }
 
+    @Override
+    public void onClose() {
+        super.onClose();
+        int slot = menu.hand == InteractionHand.MAIN_HAND ? menu.player.getInventory().selected : 40;
+        var payload = new ServerBoundUpdateBrewingListPayload(slot, menu.brewingList);
+        Minecraft.getInstance().getConnection().send(payload);
+    }
+
     public void updateRenderItems() {
         displayItems.clear();
         for (ResourceLocation recipeId : menu.brewingList.getRecipes()) {
-            BarrelRecipe recipe = (BarrelRecipe) menu.recipeManager.byKey(recipeId).map(RecipeHolder::value).get();
-            displayItems.add(recipe.getResultItem(menu.registryAccess));
+            BarrelRecipe recipe = (BarrelRecipe) menu.player.level().getRecipeManager().byKey(recipeId).map(RecipeHolder::value).get();
+            displayItems.add(recipe.getResultItem(menu.player.registryAccess()));
         }
     }
 
