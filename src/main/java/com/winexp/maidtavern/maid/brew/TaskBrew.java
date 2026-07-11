@@ -13,7 +13,7 @@ import com.github.ysbbbbbb.kaleidoscopetavern.init.ModDataComponents;
 import com.github.ysbbbbbb.kaleidoscopetavern.init.ModItems;
 import com.google.common.collect.Lists;
 import com.mojang.datafixers.util.Pair;
-import com.winexp.maidtavern.MaidTavernMod;
+import com.winexp.maidtavern.MaidTavern;
 import com.winexp.maidtavern.entity.MaidTavernEntities;
 import com.winexp.maidtavern.maid.brew.barrel.MaidBrewAddIngredientTask;
 import com.winexp.maidtavern.maid.brew.barrel.MaidBrewMoveToBarrelTask;
@@ -51,7 +51,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 public class TaskBrew implements IBrewTask {
-    private static final ResourceLocation UID = MaidTavernMod.asResource("brewing");
+    private static final ResourceLocation UID = MaidTavern.asResource("brewing");
     private static final ItemStack ICON = ModItems.BARREL.toStack();
 
     @Override

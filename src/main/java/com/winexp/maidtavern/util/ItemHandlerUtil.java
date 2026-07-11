@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class ItemHandlerUtil {
+
+
     public static boolean isEmpty(IItemHandler itemHandler) {
         for (int i = 0; i < itemHandler.getSlots(); i++) {
             if (!itemHandler.getStackInSlot(i).isEmpty()) return false;

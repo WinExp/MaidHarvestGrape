@@ -7,7 +7,7 @@ import com.github.ysbbbbbb.kaleidoscopetavern.init.ModItems;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import com.mojang.datafixers.util.Pair;
-import com.winexp.maidtavern.MaidTavernMod;
+import com.winexp.maidtavern.MaidTavern;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 public class TaskGrape implements IGrapeTask {
     public static final int MAX_GRAPE_HEIGHT = 3;
     private static final UUID FAKE_PLAYER_UUID = UUID.randomUUID();
-    private static final ResourceLocation UID = MaidTavernMod.asResource("grape");
+    private static final ResourceLocation UID = MaidTavern.asResource("grape");
     private static final ItemStack ICON = ModItems.GRAPE.toStack();
 
     @Override

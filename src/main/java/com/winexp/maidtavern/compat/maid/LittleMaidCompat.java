@@ -1,4 +1,4 @@
-package com.winexp.maidtavern.extension;
+package com.winexp.maidtavern.compat.maid;
 
 import com.github.tartaricacid.touhoulittlemaid.api.ILittleMaid;
 import com.github.tartaricacid.touhoulittlemaid.api.LittleMaidExtension;

@@ -2,7 +2,7 @@ package com.winexp.maidtavern.maid.brew.common;
 
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.google.common.collect.ImmutableMap;
-import com.winexp.maidtavern.MaidTavernMod;
+import com.winexp.maidtavern.MaidTavern;
 import com.winexp.maidtavern.entity.MaidTavernEntities;
 import com.winexp.maidtavern.maid.brew.BrewingList;
 import net.minecraft.resources.ResourceLocation;
@@ -23,12 +23,12 @@ public class MaidBrewPreCheckTask extends Behavior<EntityMaid> {
             for (ResourceLocation recipeId : brewingList.getRecipes()) {
                 if (level.getRecipeManager().byKey(recipeId).isEmpty()) {
                     brewingList.remove(recipeId);
-                    MaidTavernMod.LOGGER.warn("Brewing list has an invalid recipe: {}, removed", recipeId);
+                    MaidTavern.LOGGER.warn("Brewing list has an invalid recipe: {}, removed", recipeId);
                 }
             }
             if (brewingList.isEmpty()) {
                 brain.eraseMemory(MaidTavernEntities.BREWING_LIST.get());
-                MaidTavernMod.LOGGER.warn("Brewing list is empty, erased");
+                MaidTavern.LOGGER.warn("Brewing list is empty, erased");
             }
         }
     }

@@ -19,9 +19,16 @@ public class BrewingList {
     ).apply(instance, BrewingList::new));
     private final List<ResourceLocation> recipeIds;
 
+    public BrewingList() {
+        this(List.of());
+    }
+
     public BrewingList(List<ResourceLocation> recipes) {
-        if (recipes.isEmpty()) throw new IllegalArgumentException("recipes cannot be empty");
         recipeIds = new ArrayList<>(recipes);
+    }
+
+    public int size() {
+        return recipeIds.size();
     }
 
     public boolean isEmpty() {
@@ -49,6 +56,12 @@ public class BrewingList {
         if (isEmpty()) return false;
         if (!recipeIds.remove(recipeId)) return false;
         recipeIds.addFirst(recipeId);
+        return true;
+    }
+
+    public boolean add(ResourceLocation recipeId) {
+        if (recipeIds.contains(recipeId)) return false;
+        recipeIds.add(recipeId);
         return true;
     }
 
