@@ -38,7 +38,7 @@ public class BrewingListGhostSlotHandler implements IGhostIngredientHandler<Brew
                                 }
                             }
                         }
-                        gui.updateRenderItems();
+                        gui.getMenu().updateSlots();
                     }
                 }
         );

@@ -27,15 +27,17 @@ import java.util.Optional;
 
 public class MaidBrewAddIngredientTask extends Behavior<EntityMaid> {
     private final IBrewTask task;
+    private final double closeEnoughDist;
     private final int stepCooldown;
     private int cooldown;
 
-    public MaidBrewAddIngredientTask(IBrewTask task, int stepCooldown) {
+    public MaidBrewAddIngredientTask(IBrewTask task, double closeEnoughDist, int stepCooldown) {
         super(ImmutableMap.of(
                 InitEntities.TARGET_POS.get(), MemoryStatus.VALUE_PRESENT,
                 MaidTavernEntities.BREWING_SESSION.get(), MemoryStatus.VALUE_PRESENT
         ));
         this.task = task;
+        this.closeEnoughDist = closeEnoughDist;
         this.stepCooldown = stepCooldown;
     }
 
@@ -44,7 +46,7 @@ public class MaidBrewAddIngredientTask extends Behavior<EntityMaid> {
         Brain<EntityMaid> brain = maid.getBrain();
         PositionTracker targetPos = brain.getMemory(InitEntities.TARGET_POS.get()).get();
         Vec3 targetV3d = targetPos.currentPosition();
-        if (maid.distanceToSqr(targetV3d) > Math.pow(task.getCloseEnoughDist(), 2)) {
+        if (maid.distanceToSqr(targetV3d) > Math.pow(closeEnoughDist, 2)) {
             Optional<WalkTarget> walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET);
             if (walkTarget.isEmpty() || !walkTarget.get().getTarget().currentPosition().equals(targetV3d)) {
                 brain.eraseMemory(InitEntities.TARGET_POS.get());
@@ -95,11 +97,12 @@ public class MaidBrewAddIngredientTask extends Behavior<EntityMaid> {
         } else if (!session.fluidPlaced().booleanValue()) {
             for (int i = 0; i < 4; i++) {
                 barrel.addFluid(maid, ItemHandlerUtil.findStack(maid.getAvailableInv(true), stack ->
-                        stack.getItem() == recipe.fluid().getBucket()));
+                        stack.is(recipe.fluid().getBucket())));
             }
             session.fluidPlaced().setTrue();
             cooldown = stepCooldown;
         } else if (!session.ingredientsPlaced().booleanValue()) {
+            boolean isPlaced = false;
             ingredient:
             for (Ingredient ingredient : recipe.ingredients()) {
                 if (ingredient.isEmpty()) continue;
@@ -115,15 +118,15 @@ public class MaidBrewAddIngredientTask extends Behavior<EntityMaid> {
                         if (count >= 16) {
                             for (ItemStack addStack : addStacks) {
                                 barrel.addIngredient(maid, addStack);
+                                isPlaced = true;
                             }
                             continue ingredient;
                         }
                     }
                 }
-
             }
             session.ingredientsPlaced().setTrue();
-            cooldown = stepCooldown;
+            if (isPlaced) cooldown = stepCooldown;
         } else {
             barrel.closeLid(maid);
             clearSession(maid);

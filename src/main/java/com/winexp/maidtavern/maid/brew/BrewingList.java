@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 public class BrewingList {
@@ -29,7 +30,7 @@ public class BrewingList {
     }
 
     public BrewingList(List<ResourceLocation> recipes) {
-        recipeIds = new ArrayList<>(recipes);
+        recipeIds = new LinkedList<>(recipes);
     }
 
     public int size() {

@@ -26,6 +26,7 @@ public class ItemHandlerUtil {
     }
 
     public static boolean canInsertAny(IItemHandler itemHandler, List<ItemStack> stacks) {
+        if (stacks.isEmpty()) return false;
         for (ItemStack stack : stacks) {
             if (canInsert(itemHandler, stack)) return true;
         }

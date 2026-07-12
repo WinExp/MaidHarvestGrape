@@ -24,13 +24,15 @@ import java.util.Optional;
 
 public class MaidBrewTakeBottleTask extends Behavior<EntityMaid> {
     private final IBrewTask task;
+    private final double closeEnoughDist;
 
-    public MaidBrewTakeBottleTask(IBrewTask task) {
+    public MaidBrewTakeBottleTask(IBrewTask task, double closeEnoughDist) {
         super(ImmutableMap.of(
                 InitEntities.TARGET_POS.get(), MemoryStatus.VALUE_PRESENT,
                 MaidTavernEntities.BREWING_LIST.get(), MemoryStatus.VALUE_PRESENT
         ));
         this.task = task;
+        this.closeEnoughDist = closeEnoughDist;
     }
 
     @Override
@@ -38,7 +40,7 @@ public class MaidBrewTakeBottleTask extends Behavior<EntityMaid> {
         Brain<EntityMaid> brain = maid.getBrain();
         PositionTracker targetPos = brain.getMemory(InitEntities.TARGET_POS.get()).get();
         Vec3 targetV3d = targetPos.currentPosition();
-        if (maid.distanceToSqr(targetV3d) > Math.pow(task.getCloseEnoughDist(), 2)) {
+        if (maid.distanceToSqr(targetV3d) > Math.pow(closeEnoughDist, 2)) {
             Optional<WalkTarget> walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET);
             if (walkTarget.isEmpty()) {
                 brain.eraseMemory(InitEntities.TARGET_POS.get());

@@ -37,8 +37,12 @@ public class MaidBrewMoveToBarrelTask extends MaidMoveToBlockTask {
         BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
         if (brewingList != null) {
             brewingList.shuffle();
-            ResourceLocation recipeId = brewingList.get();
-            return task.hasRequiredMaterials(maid, recipeId);
+            for (ResourceLocation recipeId : brewingList.getRecipes()) {
+                if (task.hasRequiredMaterials(maid, recipeId)) {
+                    brewingList.select(recipeId);
+                    return true;
+                }
+            }
         }
         return false;
     }

@@ -15,8 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface IBrewTask extends IMaidTask {
-    double getCloseEnoughDist();
-
     @Nullable IBarrel getBarrel(Level level, BlockPos pos);
 
     @Contract("_, null -> false")

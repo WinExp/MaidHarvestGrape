@@ -33,7 +33,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -74,12 +73,12 @@ public class TaskBrew implements IBrewTask {
         return Lists.newArrayList(
                 Pair.of(Integer.MAX_VALUE, new MaidBrewPreCheckTask()),
                 Pair.of(5, new MaidBrewMoveToStorageTask(this, 0.45f, 3)),
-                Pair.of(5, new MaidBrewTakeAndStoreTask(this)),
+                Pair.of(5, new MaidBrewTakeAndStoreTask(this, 3)),
                 Pair.of(5, new MaidBrewMoveToBarrelTask(this, 0.45f, 3)),
-                Pair.of(5, new MaidBrewAddIngredientTask(this, 20)),
+                Pair.of(5, new MaidBrewAddIngredientTask(this, 2, 20)),
                 Pair.of(5, new MaidBrewMoveToBottleTask(this, 0.45f, 3)),
-                Pair.of(5, new MaidBrewTakeBottleTask(this)),
-                Pair.of(5, new MaidBrewPlaceBottleTask(this))
+                Pair.of(5, new MaidBrewTakeBottleTask(this, 2)),
+                Pair.of(5, new MaidBrewPlaceBottleTask(this, 2))
         );
     }
 
@@ -91,11 +90,6 @@ public class TaskBrew implements IBrewTask {
     @Override
     public boolean enableEating(EntityMaid maid) {
         return !maid.getBrain().hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get());
-    }
-
-    @Override
-    public double getCloseEnoughDist() {
-        return 2;
     }
 
     @Override
@@ -226,11 +220,10 @@ public class TaskBrew implements IBrewTask {
         BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
         if (brewingList == null) return List.of();
         for (ResourceLocation recipeId : brewingList.getRecipes()) {
-            BarrelRecipe recipe = (BarrelRecipe) maid.level().getRecipeManager().byKey(recipeId).map(RecipeHolder::value).orElse(null);
-            if (recipe == null) continue;
-            Item resultItem = recipe.getResultItem(maid.level().registryAccess()).getItem();
+            BarrelRecipe recipe = (BarrelRecipe) maid.level().getRecipeManager().byKey(recipeId).map(RecipeHolder::value).get();
+            ItemStack resultItem = recipe.getResultItem(maid.level().registryAccess());
             List<ItemStack> foundStacks = ItemHandlerUtil.findStacks(maid.getAvailableInv(false), stack ->
-                    stack.is(resultItem) || stack.is(Items.BUCKET));
+                    ItemStack.isSameItem(stack, resultItem) || stack.is(Items.BUCKET));
             if (!foundStacks.isEmpty()) {
                 return foundStacks;
             }

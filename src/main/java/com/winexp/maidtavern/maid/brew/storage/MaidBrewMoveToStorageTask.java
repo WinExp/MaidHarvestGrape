@@ -1,19 +1,20 @@
 package com.winexp.maidtavern.maid.brew.storage;
 
-import com.github.tartaricacid.touhoulittlemaid.entity.ai.brain.task.MaidMoveToBlockTask;
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.init.InitEntities;
 import com.winexp.maidtavern.entity.MaidTavernEntities;
 import com.winexp.maidtavern.maid.brew.IBrewTask;
+import com.winexp.maidtavern.maid.task.MaidSurroundingMoveToBlockTask;
 import com.winexp.maidtavern.util.ItemHandlerUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
-public class MaidBrewMoveToStorageTask extends MaidMoveToBlockTask {
+public class MaidBrewMoveToStorageTask extends MaidSurroundingMoveToBlockTask {
     private final IBrewTask task;
 
     public MaidBrewMoveToStorageTask(IBrewTask task, float movementSpeed, int verticalSearchRange) {
