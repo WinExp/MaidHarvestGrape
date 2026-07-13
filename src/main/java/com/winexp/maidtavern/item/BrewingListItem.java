@@ -24,6 +24,7 @@ public class BrewingListItem extends Item implements MenuProvider, MaidInteracti
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
         ItemStack stack = player.getItemInHand(usedHand);
+        if (player.isShiftKeyDown()) return InteractionResultHolder.pass(stack);
         player.openMenu(this, buf -> {
             buf.writeEnum(usedHand);
             BrewingList brewingList = stack.get(MaidTavernItems.BREWING_LIST_DATA);
