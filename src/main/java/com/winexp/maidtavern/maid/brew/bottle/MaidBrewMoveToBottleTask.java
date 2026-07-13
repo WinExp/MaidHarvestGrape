@@ -4,14 +4,14 @@ import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.init.InitEntities;
 import com.winexp.maidtavern.entity.MaidTavernEntities;
 import com.winexp.maidtavern.maid.brew.IBrewTask;
-import com.winexp.maidtavern.maid.task.MaidSurroundingMoveToBlockTask;
+import com.winexp.maidtavern.maid.task.MaidSurroundingMoveTask;
 import com.winexp.maidtavern.util.MaidUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.Brain;
 
-public class MaidBrewMoveToBottleTask extends MaidSurroundingMoveToBlockTask {
+public class MaidBrewMoveToBottleTask extends MaidSurroundingMoveTask {
     private final IBrewTask task;
     private Direction tapFacing;
 

@@ -23,6 +23,7 @@ import com.winexp.maidtavern.maid.brew.bottle.MaidBrewTakeBottleTask;
 import com.winexp.maidtavern.maid.brew.common.MaidBrewPreCheckTask;
 import com.winexp.maidtavern.maid.brew.storage.MaidBrewMoveToStorageTask;
 import com.winexp.maidtavern.maid.brew.storage.MaidBrewTakeAndStoreTask;
+import com.winexp.maidtavern.maid.task.IMaidTaskExt;
 import com.winexp.maidtavern.mixin.BarrelBlockEntityAccessor;
 import com.winexp.maidtavern.util.ItemHandlerUtil;
 import net.minecraft.advancements.critereon.MinMaxBounds;
@@ -49,7 +50,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public class TaskBrew implements IBrewTask {
+public class TaskBrew implements IBrewTask, IMaidTaskExt {
     private static final ResourceLocation UID = MaidTavern.asResource("brewing");
     private static final ItemStack ICON = ModItems.BARREL.toStack();
 
@@ -72,11 +73,11 @@ public class TaskBrew implements IBrewTask {
     public List<Pair<Integer, BehaviorControl<? super EntityMaid>>> createBrainTasks(EntityMaid maid) {
         return Lists.newArrayList(
                 Pair.of(Integer.MAX_VALUE, new MaidBrewPreCheckTask()),
-                Pair.of(5, new MaidBrewMoveToStorageTask(this, 0.45f, 3)),
+                Pair.of(5, new MaidBrewMoveToStorageTask(this, 0.45f, 4)),
                 Pair.of(5, new MaidBrewTakeAndStoreTask(this, 3)),
-                Pair.of(5, new MaidBrewMoveToBarrelTask(this, 0.45f, 3)),
-                Pair.of(5, new MaidBrewAddIngredientTask(this, 2, 20)),
-                Pair.of(5, new MaidBrewMoveToBottleTask(this, 0.45f, 3)),
+                Pair.of(5, new MaidBrewMoveToBarrelTask(this, 0.45f, 4)),
+                Pair.of(5, new MaidBrewAddIngredientTask(this, 2.5, 20)),
+                Pair.of(5, new MaidBrewMoveToBottleTask(this, 0.45f, 4)),
                 Pair.of(5, new MaidBrewTakeBottleTask(this, 2)),
                 Pair.of(5, new MaidBrewPlaceBottleTask(this, 2))
         );
@@ -84,6 +85,11 @@ public class TaskBrew implements IBrewTask {
 
     @Override
     public boolean enableLookAndRandomWalk(EntityMaid maid) {
+        return !maid.getBrain().hasMemoryValue(InitEntities.TARGET_POS.get());
+    }
+
+    @Override
+    public boolean enableStealEdible(EntityMaid maid) {
         return !maid.getBrain().hasMemoryValue(InitEntities.TARGET_POS.get());
     }
 

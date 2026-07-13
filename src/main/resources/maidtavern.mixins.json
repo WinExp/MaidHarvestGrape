@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "BarrelBlockEntityAccessor",
-    "ItemUtilsMixin"
+    "ItemUtilsMixin",
+    "MaidStealEdibleUseTaskMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -32,7 +32,8 @@ public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
     public MaidBrewTakeAndStoreTask(IBrewTask task, double closeEnoughDist) {
         super(ImmutableMap.of(
                 InitEntities.TARGET_POS.get(), MemoryStatus.VALUE_PRESENT,
-                MaidTavernEntities.BREWING_LIST.get(), MemoryStatus.VALUE_PRESENT
+                MaidTavernEntities.BREWING_LIST.get(), MemoryStatus.VALUE_PRESENT,
+                MaidTavernEntities.BREWING_SESSION.get(), MemoryStatus.VALUE_ABSENT
         ));
         this.task = task;
         this.closeEnoughDist = closeEnoughDist;
@@ -42,6 +43,10 @@ public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
     protected boolean checkExtraStartConditions(ServerLevel level, EntityMaid maid) {
         Brain<EntityMaid> brain = maid.getBrain();
         PositionTracker targetPos = brain.getMemory(InitEntities.TARGET_POS.get()).get();
+
+        BlockPos pos = targetPos.currentBlockPosition();
+        if (!task.isStorageValid(level, pos)) return false;
+
         Vec3 targetV3d = targetPos.currentPosition();
         if (maid.distanceToSqr(targetV3d) > Math.pow(closeEnoughDist, 2)) {
             Optional<WalkTarget> walkTarget = brain.getMemory(MemoryModuleType.WALK_TARGET);
@@ -50,10 +55,7 @@ public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
             }
             return false;
         }
-
-        if (brain.hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get())) return false;
-        BlockPos pos = targetPos.currentBlockPosition();
-        return task.isStorageValid(level, pos);
+        return true;
     }
 
     @Override

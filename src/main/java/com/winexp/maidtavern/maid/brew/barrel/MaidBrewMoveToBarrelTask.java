@@ -1,6 +1,5 @@
 package com.winexp.maidtavern.maid.brew.barrel;
 
-import com.github.tartaricacid.touhoulittlemaid.entity.ai.brain.task.MaidMoveToBlockTask;
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.init.InitEntities;
 import com.github.ysbbbbbb.kaleidoscopetavern.api.blockentity.IBarrel;
@@ -9,6 +8,7 @@ import com.winexp.maidtavern.entity.MaidTavernEntities;
 import com.winexp.maidtavern.maid.brew.BrewingList;
 import com.winexp.maidtavern.maid.brew.BrewingSession;
 import com.winexp.maidtavern.maid.brew.IBrewTask;
+import com.winexp.maidtavern.maid.task.MaidSurroundingMoveTask;
 import com.winexp.maidtavern.util.MaidUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -17,8 +17,9 @@ import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.BehaviorUtils;
 import net.minecraft.world.entity.ai.behavior.BlockPosTracker;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
-public class MaidBrewMoveToBarrelTask extends MaidMoveToBlockTask {
+public class MaidBrewMoveToBarrelTask extends MaidSurroundingMoveTask {
     private final IBrewTask task;
     private final float movementSpeed;
 
@@ -27,6 +28,7 @@ public class MaidBrewMoveToBarrelTask extends MaidMoveToBlockTask {
         this.task = task;
         this.movementSpeed = movementSpeed;
         setMaxCheckRate(60);
+        moveRange = new BoundingBox(-2, -1, -2, 2, 1, 2);
     }
 
     @Override

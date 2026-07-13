@@ -4,7 +4,7 @@ import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.github.tartaricacid.touhoulittlemaid.init.InitEntities;
 import com.winexp.maidtavern.entity.MaidTavernEntities;
 import com.winexp.maidtavern.maid.brew.IBrewTask;
-import com.winexp.maidtavern.maid.task.MaidSurroundingMoveToBlockTask;
+import com.winexp.maidtavern.maid.task.MaidSurroundingMoveTask;
 import com.winexp.maidtavern.util.ItemHandlerUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -14,13 +14,14 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
-public class MaidBrewMoveToStorageTask extends MaidSurroundingMoveToBlockTask {
+public class MaidBrewMoveToStorageTask extends MaidSurroundingMoveTask {
     private final IBrewTask task;
 
     public MaidBrewMoveToStorageTask(IBrewTask task, float movementSpeed, int verticalSearchRange) {
         super(movementSpeed, verticalSearchRange);
         this.task = task;
         setMaxCheckRate(40);
+        moveRange = new BoundingBox(-1, -2, -1, 1, 1, 1);
     }
 
     @Override

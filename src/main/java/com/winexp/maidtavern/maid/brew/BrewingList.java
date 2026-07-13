@@ -23,14 +23,18 @@ public class BrewingList {
             BrewingList::new
     );
 
-    private final List<ResourceLocation> recipeIds;
+    private final List<ResourceLocation> recipeIds = new LinkedList<>();
 
     public BrewingList() {
         this(List.of());
     }
 
     public BrewingList(List<ResourceLocation> recipes) {
-        recipeIds = new LinkedList<>(recipes);
+        for (ResourceLocation recipeId : recipes) {
+            if (!recipeIds.contains(recipeId)) {
+                recipeIds.add(recipeId);
+            }
+        }
     }
 
     public int size() {
@@ -56,6 +60,12 @@ public class BrewingList {
     public @Nullable ResourceLocation get() {
         if (isEmpty()) return null;
         return recipeIds.getFirst();
+    }
+
+    public @Nullable ResourceLocation get(int idx) {
+        if (isEmpty()) return null;
+        if (idx >= recipeIds.size()) return null;
+        return recipeIds.get(idx);
     }
 
     public boolean select(ResourceLocation recipeId) {

@@ -28,12 +28,18 @@ public class BrewingListScreen extends AbstractContainerScreen<BrewingListMenu> 
 
         int idx = getAreaIdx((int) mouseX, (int) mouseY);
         if (idx < 0 || idx >= menu.brewingList.size()) return false;
-        ResourceLocation recipeId = menu.brewingList.getRecipes().get(idx);
+        ResourceLocation recipeId = menu.brewingList.get(idx);
         if (button == 0) {
             menu.brewingList.remove(recipeId);
         }
         menu.updateSlots();
         return true;
+    }
+
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @Override
