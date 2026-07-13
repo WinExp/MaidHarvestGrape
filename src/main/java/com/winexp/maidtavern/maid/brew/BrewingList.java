@@ -85,6 +85,12 @@ public class BrewingList {
         return recipeIds.remove(recipeId);
     }
 
+    public @Nullable ResourceLocation remove(int idx) {
+        if (isEmpty()) return null;
+        if (idx >= recipeIds.size()) return null;
+        return recipeIds.remove(idx);
+    }
+
     public List<ResourceLocation> getRecipes() {
         return new ArrayList<>(recipeIds);
     }

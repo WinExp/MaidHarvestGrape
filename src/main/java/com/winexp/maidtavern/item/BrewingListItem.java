@@ -16,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
-public class BrewingListItem extends Item implements MenuProvider {
+public class BrewingListItem extends Item implements MenuProvider, MaidInteractionItem {
     public BrewingListItem(Properties properties) {
         super(properties);
     }
@@ -33,15 +33,18 @@ public class BrewingListItem extends Item implements MenuProvider {
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
 
+    @Override
     public boolean useOnMaid(Level level, Player player, EntityMaid maid, ItemStack stack) {
         if (player.isShiftKeyDown()) {
             BrewingList brewingList = maid.getBrain().getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(new BrewingList());
             stack.set(MaidTavernItems.BREWING_LIST_DATA, brewingList);
+            player.displayClientMessage(Component.translatable("item.maidtavern.brewing_list.load"), true);
             return true;
         } else {
             if (stack.has(MaidTavernItems.BREWING_LIST_DATA)) {
                 BrewingList brewingList = stack.get(MaidTavernItems.BREWING_LIST_DATA);
                 maid.getBrain().setMemory(MaidTavernEntities.BREWING_LIST.get(), brewingList);
+                player.displayClientMessage(Component.translatable("item.maidtavern.brewing_list.save"), true);
                 return true;
             }
         }

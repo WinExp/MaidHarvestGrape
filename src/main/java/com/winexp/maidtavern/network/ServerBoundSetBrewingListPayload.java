@@ -12,22 +12,22 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record ServerBoundUpdateBrewingListPayload(int slot, BrewingList brewingList) implements CustomPacketPayload {
-    public static final Type<ServerBoundUpdateBrewingListPayload> TYPE = new Type<>(MaidTavern.asResource("update_brewing_list"));
-    public static final StreamCodec<ByteBuf, ServerBoundUpdateBrewingListPayload> STREAM_CODEC = StreamCodec.composite(
+public record ServerBoundSetBrewingListPayload(int slot, BrewingList brewingList) implements CustomPacketPayload {
+    public static final Type<ServerBoundSetBrewingListPayload> TYPE = new Type<>(MaidTavern.asResource("set_brewing_list"));
+    public static final StreamCodec<ByteBuf, ServerBoundSetBrewingListPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT,
-            ServerBoundUpdateBrewingListPayload::slot,
+            ServerBoundSetBrewingListPayload::slot,
             BrewingList.STREAM_CODEC,
-            ServerBoundUpdateBrewingListPayload::brewingList,
-            ServerBoundUpdateBrewingListPayload::new
+            ServerBoundSetBrewingListPayload::brewingList,
+            ServerBoundSetBrewingListPayload::new
     );
 
     @Override
-    public Type<ServerBoundUpdateBrewingListPayload> type() {
+    public Type<ServerBoundSetBrewingListPayload> type() {
         return TYPE;
     }
 
-    public static void handle(ServerBoundUpdateBrewingListPayload payload, IPayloadContext context) {
+    public static void handle(ServerBoundSetBrewingListPayload payload, IPayloadContext context) {
         Player player = context.player();
         int slot = payload.slot;
         if (!Inventory.isHotbarSlot(slot) && slot != Inventory.SLOT_OFFHAND) return;

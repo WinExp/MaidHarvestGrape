@@ -49,7 +49,13 @@ public class MaidBrewPlaceBottleTask extends Behavior<EntityMaid> {
         PositionTracker targetPos = brain.getMemory(InitEntities.TARGET_POS.get()).get();
 
         BlockPos pos = targetPos.currentBlockPosition();
-        if (!task.shouldPlaceBottle(maid, pos)) return false;
+        if (!task.shouldPlaceBottle(maid, pos)) {
+            BlockState tapState = level.getBlockState(pos.above());
+            if (!tapState.is(ModBlocks.TAP) || !tapState.getValue(TapBlock.OPEN)) {
+                brain.eraseMemory(InitEntities.TARGET_POS.get());
+            }
+            return false;
+        }
 
         Vec3 targetV3d = targetPos.currentPosition();
         if (maid.distanceToSqr(targetV3d) > Math.pow(closeEnoughDist, 2)) {
@@ -74,6 +80,5 @@ public class MaidBrewPlaceBottleTask extends Behavior<EntityMaid> {
         BlockState tapState = level.getBlockState(pos.above());
         FakePlayer fakePlayer = new FakePlayer(level, new GameProfile(FAKE_PLAYER_UUID, "Arm"));
         ((TapBlock) ModBlocks.TAP.get()).useItemOn(ItemStack.EMPTY, tapState, level, pos.above(), fakePlayer, InteractionHand.MAIN_HAND, null);
-        brain.eraseMemory(InitEntities.TARGET_POS.get());
     }
 }

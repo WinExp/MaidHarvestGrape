@@ -40,7 +40,12 @@ public class BrewingListMenu extends AbstractContainerMenu {
         for (int row = 0; row < getRows(); row++) {
             for (int col = 0; col < getColumns(); col++) {
                 GhostSlot slot = new GhostSlot(displayItems, col + row * getColumns(),
-                        32 + 18 * col, 4 + 18 * row);
+                        32 + 18 * col, 4 + 18 * row) {
+                    @Override
+                    public boolean mayPlace(ItemStack stack) {
+                        return false;
+                    }
+                };
                 slot.addListener(this::onSlotEmptied);
                 addSlot(slot);
             }
@@ -50,6 +55,7 @@ public class BrewingListMenu extends AbstractContainerMenu {
 
     private void onSlotEmptied(GhostSlot slot, ItemStack prevStack) {
         if (!prevStack.isEmpty()) {
+            brewingList.remove(slot.getContainerSlot());
             updateSlots();
         }
     }

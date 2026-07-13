@@ -21,16 +21,20 @@ public class GhostSlot extends Slot {
     }
 
     @Override
-    public void onQuickCraft(ItemStack oldStack, ItemStack newStack) {
+    public Optional<ItemStack> tryRemove(int count, int decrement, Player player) {
+        Optional<ItemStack> result = super.tryRemove(count, decrement, player);
+        if (getItem().isEmpty()) {
+            for (SlotEmptiedListener listener : this.listeners) {
+                listener.onSlotEmptied(this, result.orElse(ItemStack.EMPTY));
+            }
+        }
+        return Optional.empty();
     }
 
     @Override
-    public Optional<ItemStack> tryRemove(int count, int decrement, Player player) {
-        Optional<ItemStack> result = super.tryRemove(count, decrement, player);
-        for (SlotEmptiedListener listener : this.listeners) {
-            listener.onSlotEmptied(this, result.orElse(ItemStack.EMPTY));
-        }
-        return Optional.empty();
+    public ItemStack safeInsert(ItemStack stack, int increment) {
+        super.safeInsert(stack.copy(), increment);
+        return stack;
     }
 
     @Override

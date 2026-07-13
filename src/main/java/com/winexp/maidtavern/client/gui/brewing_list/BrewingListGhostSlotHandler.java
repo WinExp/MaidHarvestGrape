@@ -25,12 +25,7 @@ public class BrewingListGhostSlotHandler implements IGhostIngredientHandler<Brew
                 .map(RecipeHolder::id)
                 .orElse(null);
         if (recipeId == null) return List.of();
-        List<Rect2i> areas = gui.getListEntryAreas();
-        Rect2i firstArea = areas.getFirst();
-        Rect2i lastArea = areas.getLast();
-        Rect2i area = new Rect2i(firstArea.getX(), firstArea.getY(),
-                lastArea.getX() + lastArea.getWidth() - firstArea.getX(),
-                lastArea.getY() + lastArea.getHeight() - firstArea.getY());
+        Rect2i area = gui.getEntryArea();
         return List.of(
                 new Target<>() {
                     @Override

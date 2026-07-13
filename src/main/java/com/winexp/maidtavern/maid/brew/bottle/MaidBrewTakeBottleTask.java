@@ -41,7 +41,8 @@ public class MaidBrewTakeBottleTask extends Behavior<EntityMaid> {
         Brain<EntityMaid> brain = maid.getBrain();
         PositionTracker targetPos = brain.getMemory(InitEntities.TARGET_POS.get()).get();
 
-        if (!task.isBottleValid(maid, targetPos.currentBlockPosition())) return false;
+        BlockPos pos = targetPos.currentBlockPosition();
+        if (!task.isBottleValid(maid, pos)) return false;
 
         Vec3 targetV3d = targetPos.currentPosition();
         if (maid.distanceToSqr(targetV3d) > Math.pow(closeEnoughDist, 2)) {
@@ -63,6 +64,5 @@ public class MaidBrewTakeBottleTask extends Behavior<EntityMaid> {
                 .forEach(stack -> ItemUtils.getItemToLivingEntity(maid, stack));
         level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_SUPPRESS_DROPS | Block.UPDATE_ALL);
         level.playSound(null, pos, SoundType.STONE.getPlaceSound(), maid.getSoundSource(), 1.0f, 1.0f);
-        brain.eraseMemory(InitEntities.TARGET_POS.get());
     }
 }
