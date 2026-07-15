@@ -3,6 +3,7 @@ package com.winexp.maidtavern.item;
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
 import com.winexp.maidtavern.entity.MaidTavernEntities;
 import com.winexp.maidtavern.maid.brew.BrewingList;
+import com.winexp.maidtavern.maid.brew.IBrewTask;
 import com.winexp.maidtavern.menu.BrewingListMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -36,6 +37,7 @@ public class BrewingListItem extends Item implements MenuProvider, MaidInteracti
 
     @Override
     public boolean useOnMaid(Level level, Player player, EntityMaid maid, ItemStack stack) {
+        if (!(maid.getTask() instanceof IBrewTask)) return false;
         if (player.isShiftKeyDown()) {
             BrewingList brewingList = maid.getBrain().getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(new BrewingList());
             stack.set(MaidTavernItems.BREWING_LIST_DATA, brewingList);
