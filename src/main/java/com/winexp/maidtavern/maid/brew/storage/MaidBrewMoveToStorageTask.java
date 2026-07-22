@@ -31,7 +31,7 @@ public class MaidBrewMoveToStorageTask extends MaidSurroundingMoveTask {
                 || brain.hasMemoryValue(InitEntities.TARGET_POS.get())
                 || brain.hasMemoryValue(MaidTavernEntities.BREWING_SESSION.get())
                 || !brain.hasMemoryValue(MaidTavernEntities.BREWING_LIST.get())) return false;
-        return task.shouldTake(maid) || !task.getNeedToStoreStacks(maid).isEmpty();
+        return task.shouldExtract(maid) || !task.getStacksToInsert(maid).isEmpty();
     }
 
     @Override
@@ -44,7 +44,7 @@ public class MaidBrewMoveToStorageTask extends MaidSurroundingMoveTask {
         if (!(level.getBlockEntity(pos) instanceof Container container)) return false;
         if (!task.isStorageValid(level, pos)) return false;
         IItemHandler containerInv = new InvWrapper(container);
-        if (!task.getNeedToTakeStacks(maid, containerInv).isEmpty()) return true;
-        return ItemHandlerUtil.canInsertAny(containerInv, task.getNeedToStoreStacks(maid));
+        if (!task.getStacksToExtract(maid, containerInv).isEmpty()) return true;
+        return ItemHandlerUtil.canInsertAny(containerInv, task.getStacksToInsert(maid));
     }
 }

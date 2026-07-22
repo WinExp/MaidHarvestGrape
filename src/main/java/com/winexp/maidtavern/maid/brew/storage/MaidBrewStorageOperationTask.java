@@ -25,11 +25,11 @@ import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
 import java.util.Optional;
 
-public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
+public class MaidBrewStorageOperationTask extends Behavior<EntityMaid> {
     private final IBrewTask task;
     private final double closeEnoughDist;
 
-    public MaidBrewTakeAndStoreTask(IBrewTask task, double closeEnoughDist) {
+    public MaidBrewStorageOperationTask(IBrewTask task, double closeEnoughDist) {
         super(ImmutableMap.of(
                 InitEntities.TARGET_POS.get(), MemoryStatus.VALUE_PRESENT,
                 MaidTavernEntities.BREWING_LIST.get(), MemoryStatus.VALUE_PRESENT,
@@ -58,26 +58,33 @@ public class MaidBrewTakeAndStoreTask extends Behavior<EntityMaid> {
         return true;
     }
 
+    private void extractStacks(EntityMaid maid, IItemHandlerModifiable storage, IItemHandlerModifiable inventory) {
+        for (Pair<ItemStack, Integer> pair : task.getStacksToExtract(maid, storage)) {
+            ItemStack stack = pair.getFirst();
+            int count = pair.getSecond();
+            if (!ItemHandlerUtil.canInsert(inventory, stack.copyWithCount(count))) continue;
+            ItemHandlerHelper.insertItemStacked(inventory, stack.copyWithCount(count), false);
+            stack.shrink(count);
+        }
+    }
+
+    private void insertStacks(EntityMaid maid, IItemHandlerModifiable storage, IItemHandlerModifiable inventory) {
+        for (ItemStack stack : task.getStacksToInsert(maid)) {
+            if (!ItemHandlerUtil.canInsert(storage, stack)) continue;
+            ItemHandlerUtil.replaceStack(inventory, stack,
+                    ItemHandlerHelper.insertItemStacked(storage, stack, false));
+        }
+    }
+
     @Override
     protected void start(ServerLevel level, EntityMaid maid, long gameTime) {
         Brain<EntityMaid> brain = maid.getBrain();
         BlockPos pos = brain.getMemory(InitEntities.TARGET_POS.get()).get().currentBlockPosition();
         BaseContainerBlockEntity container = (BaseContainerBlockEntity) level.getBlockEntity(pos);
         IItemHandlerModifiable storage = new InvWrapper(container);
-        IItemHandlerModifiable maidInv = maid.getAvailableInv(true);
-        for (Pair<ItemStack, Integer> pair : task.getNeedToTakeStacks(maid, storage)) {
-            ItemStack stack = pair.getFirst();
-            int count = pair.getSecond();
-            if (!ItemHandlerUtil.canInsert(maidInv, stack.copyWithCount(count))) continue;
-            ItemHandlerHelper.insertItemStacked(maidInv, stack.copyWithCount(count), false);
-            stack.shrink(count);
-        }
-
-        for (ItemStack stack : task.getNeedToStoreStacks(maid)) {
-            if (!ItemHandlerUtil.canInsert(storage, stack)) continue;
-            ItemHandlerUtil.replaceStack(maidInv, stack,
-                    ItemHandlerHelper.insertItemStacked(storage, stack, false));
-        }
+        IItemHandlerModifiable inventory = maid.getAvailableInv(true);
+        extractStacks(maid, storage, inventory);
+        insertStacks(maid, storage, inventory);
         brain.eraseMemory(InitEntities.TARGET_POS.get());
         maid.playSound(SoundEvents.ITEM_FRAME_REMOVE_ITEM, 1.0f, 1.0f);
     }

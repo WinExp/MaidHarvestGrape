@@ -22,11 +22,11 @@ public interface IBrewTask extends IMaidTask {
 
     boolean hasIngredients(EntityMaid maid, ResourceLocation recipeId);
 
-    boolean shouldTake(EntityMaid maid);
+    boolean shouldExtract(EntityMaid maid);
 
-    List<Pair<ItemStack, Integer>> getNeedToTakeStacks(EntityMaid maid, IItemHandler storage);
+    List<Pair<ItemStack, Integer>> getStacksToExtract(EntityMaid maid, IItemHandler storage);
 
-    List<ItemStack> getNeedToStoreStacks(EntityMaid maid);
+    List<ItemStack> getStacksToInsert(EntityMaid maid);
 
     boolean isStorageValid(Level level, BlockPos pos);
 

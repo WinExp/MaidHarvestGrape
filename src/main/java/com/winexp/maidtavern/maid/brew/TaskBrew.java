@@ -23,7 +23,7 @@ import com.winexp.maidtavern.maid.brew.bottle.MaidBrewPlaceBottleTask;
 import com.winexp.maidtavern.maid.brew.bottle.MaidBrewTakeBottleTask;
 import com.winexp.maidtavern.maid.brew.common.MaidBrewPreCheckTask;
 import com.winexp.maidtavern.maid.brew.storage.MaidBrewMoveToStorageTask;
-import com.winexp.maidtavern.maid.brew.storage.MaidBrewTakeAndStoreTask;
+import com.winexp.maidtavern.maid.brew.storage.MaidBrewStorageOperationTask;
 import com.winexp.maidtavern.maid.task.IMaidTaskExt;
 import com.winexp.maidtavern.mixin.BarrelBlockEntityAccessor;
 import com.winexp.maidtavern.tag.MaidTavernItemTags;
@@ -76,7 +76,7 @@ public class TaskBrew implements IBrewTask, IMaidTaskExt {
         return Lists.newArrayList(
                 Pair.of(Integer.MAX_VALUE, new MaidBrewPreCheckTask()),
                 Pair.of(5, new MaidBrewMoveToStorageTask(this, 0.45f, 4)),
-                Pair.of(5, new MaidBrewTakeAndStoreTask(this, 3)),
+                Pair.of(5, new MaidBrewStorageOperationTask(this, 3)),
                 Pair.of(5, new MaidBrewMoveToBarrelTask(this, 0.45f, 4)),
                 Pair.of(5, new MaidBrewAddIngredientTask(this, 2.5, 20)),
                 Pair.of(5, new MaidBrewMoveToBottleTask(this, 0.45f, 4)),
@@ -154,7 +154,7 @@ public class TaskBrew implements IBrewTask, IMaidTaskExt {
     }
 
     @Override
-    public boolean shouldTake(EntityMaid maid) {
+    public boolean shouldExtract(EntityMaid maid) {
         BrewingList brewingList = maid.getBrain().getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
         if (brewingList == null) return false;
         ResourceLocation recipeId = brewingList.get();
@@ -163,7 +163,7 @@ public class TaskBrew implements IBrewTask, IMaidTaskExt {
     }
 
     @Override
-    public @Nullable List<Pair<ItemStack, Integer>> getNeedToTakeStacks(EntityMaid maid, IItemHandler storage) {
+    public @Nullable List<Pair<ItemStack, Integer>> getStacksToExtract(EntityMaid maid, IItemHandler storage) {
         IItemHandler maidInv = maid.getAvailableInv(true);
         Brain<EntityMaid> brain = maid.getBrain();
         BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
@@ -173,7 +173,7 @@ public class TaskBrew implements IBrewTask, IMaidTaskExt {
         BarrelRecipe recipe = (BarrelRecipe) maid.level().getRecipeManager().byKey(recipeId).map(RecipeHolder::value).orElse(null);
         List<Pair<ItemStack, Integer>> baseResult = new ArrayList<>();
         Predicate<ItemStack> bottlePredicate = stack -> stack.is(ModItems.EMPTY_BOTTLE);
-        int bottleRequired = 16 - ItemHandlerUtil.countItems(maidInv, bottlePredicate);
+        int bottleRequired = ModItems.EMPTY_BOTTLE.get().getDefaultMaxStackSize() - ItemHandlerUtil.countItems(maidInv, bottlePredicate);
         if (bottleRequired > 0) {
             List<ItemStack> bottleStacks = ItemHandlerUtil.findStacks(storage, bottlePredicate);
             for (ItemStack stack : bottleStacks) {
@@ -228,7 +228,7 @@ public class TaskBrew implements IBrewTask, IMaidTaskExt {
     }
 
     @Override
-    public List<ItemStack> getNeedToStoreStacks(EntityMaid maid) {
+    public List<ItemStack> getStacksToInsert(EntityMaid maid) {
         Brain<EntityMaid> brain = maid.getBrain();
         BrewingList brewingList = brain.getMemory(MaidTavernEntities.BREWING_LIST.get()).orElse(null);
         if (brewingList == null) return List.of();
